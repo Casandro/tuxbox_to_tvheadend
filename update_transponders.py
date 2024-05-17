@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import os
 import xmltodict
 import json
 import requests
