@@ -15,3 +15,5 @@ The environment variables are:
   * `TVHEADEND_USER`: Username of an admin user, do not use your normal one
   * `TVHEADEND_PASS`: Password of that user
 
+### `delete_double_transponders.py`
+This script deletes transponders which are identical. Use this as a kind of cleanup script
