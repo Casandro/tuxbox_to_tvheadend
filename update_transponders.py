@@ -99,9 +99,6 @@ dvb_muxes_failed=[]
 log_start("Sorting Muxes into failed and OK")
 for x in dvb_muxes_:
     pos=0
-    if x["scan_result"]==2 and len(x["services"])==0:
-        dvb_muxes_failed.append(x)
-        continue
     if 'orbital' in x:
         orbital=x["orbital"]
         if len(orbital)>2:
@@ -239,6 +236,10 @@ for tn in transponders:
             continue
         if t_data["polarisation"]!=m_data["polarisation"]:
             continue
+        if t_data["delsys"]!=m_data["delsys"]:
+            continue
+        if t_data["modulation"]!=m_data["modulation"]:
+            continue
         fdiff=abs(t_data["frequency"]-m_data["frequency"])
         if (fdiff>1000):
             continue        
@@ -253,14 +254,14 @@ log_end("%s transponders left" % (len(transponders)))
 
 
 log_start("Applying changes to tvheadend")
-log_start("Deleting failed muxes")
-for m in dvb_muxes_failed:
-    if 'uuid' in m:
-        uuid=m['uuid']
-    req=requests.post("http://"+tvheadend_ip+":"+tvheadend_port+"/api/idnode/delete", data={'uuid':[uuid]}, auth=HTTPDigestAuth(tvheadend_user, tvheadend_pass))
-    req.encoding="UTF-8"
-    log(uuid+" "+str(req.status_code)+" "+req.text)
-log_end("");
+# log_start("Deleting failed muxes")
+# for m in dvb_muxes_failed:
+#     if 'uuid' in m:
+#         uuid=m['uuid']
+#     req=requests.post("http://"+tvheadend_ip+":"+tvheadend_port+"/api/idnode/delete", data={'uuid':[uuid]}, auth=HTTPDigestAuth(tvheadend_user, tvheadend_pass))
+#     req.encoding="UTF-8"
+#     log(uuid+" "+str(req.status_code)+" "+req.text)
+# log_end("");
 
 log_start("Adding new muxes")
 for tn in transponders:
@@ -268,10 +269,9 @@ for tn in transponders:
     post_data={}
     post_data['uuid']=t['uuid']
     post_data["conf"]=json.dumps(t['data'])
-    print(post_data)
     req=requests.post("http://"+tvheadend_ip+":"+tvheadend_port+"/api/mpegts/network/mux_create", data=post_data, auth=HTTPDigestAuth(tvheadend_user, tvheadend_pass))
     req.encoding="UTF-8"
-    log(json.dumps(post_data)+" "+str(req.status_code)+" "+req.text)
+    log(json.dumps(t['data'])[0:80]+"... "+str(req.status_code)+" "+req.text)
 log_end("")
 
 
