@@ -98,6 +98,8 @@ dvb_muxes=[]
 dvb_muxes_failed=[]
 log_start("Sorting Muxes into failed and OK")
 for x in dvb_muxes_:
+    if not 'orbital' in x:
+        continue
     if x["scan_result"]==2 and len(x["services"])==0:
         dvb_muxes_failed.append(x["uuid"])
     pos=0
@@ -107,7 +109,7 @@ for x in dvb_muxes_:
             pos=float(orbital[0:-1])
             if orbital[-1]=="W":
                 pos=-pos
-    dvb_muxes.append([x, pos])
+        dvb_muxes.append([x, pos])
 log_end("failed muxes: %s; ok muxes: %s" %(len(dvb_muxes_failed),len(dvb_muxes)))
 
 log_start("Getting tvheadend network data")
@@ -223,24 +225,26 @@ for sat in satellite_document:
 
 log_end("%s transponders found in satellites.xml" % (len(transponders)))
 
-log_start("Finding muxes for transponders")
+log_start("Finding existing muxes for transponders")
 delete_transponders=[]
 for tn in transponders:
     t=transponders[tn]
     for m in dvb_muxes:
-        if t["pos"]!=m[1]:
+        if abs(t["pos"]-m[1])>1.5:
             continue
         t_data=t["data"]
         m_data=m[0]
-        if not "polarisation" in t_data:
-            continue
-        if not "polarisation" in m_data:
-            continue
-        if t_data["polarisation"]!=m_data["polarisation"]:
-            continue
-        if t_data["delsys"]!=m_data["delsys"]:
-            continue
-        if t_data["modulation"]!=m_data["modulation"]:
+        dif=0
+        for prop in t_data:
+            if prop=="frequency":
+                continue
+            if not prop in m_data:
+                dif=dif+1
+                break
+            if t_data[prop]!=m_data[prop]:
+                dif=dif+1
+                break
+        if dif>0:
             continue
         fdiff=abs(t_data["frequency"]-m_data["frequency"])
         if (fdiff>1000):
@@ -256,6 +260,7 @@ for t in delete_transponders:
         transponders.pop(t)
 log_end("%s transponders left" % (len(transponders)))
 
+#exit()
 
 log_start("Applying changes to tvheadend")
 log_start("Deleting %s failed muxes"% (len(dvb_muxes_failed)))
@@ -273,8 +278,8 @@ for tn in transponders:
     post_data["conf"]=json.dumps(t['data'])
     req=requests.post("http://"+tvheadend_ip+":"+tvheadend_port+"/api/mpegts/network/mux_create", data=post_data, auth=HTTPDigestAuth(tvheadend_user, tvheadend_pass))
     req.encoding="UTF-8"
-    log(str(t["pos"])+" "+json.dumps(t['data'])[0:80]+"... "+str(req.status_code)+" "+req.text)
-log_end("")
+    log(str(t["pos"])+" "+json.dumps(t['data'])+" "+str(req.status_code)+" "+req.text)
+log_end(" %s muxes added" % (len(transponders)))
 
 
 log_end("")

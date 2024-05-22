@@ -99,7 +99,7 @@ for mux in dvb_muxes:
                     differences=differences+1
             if differences>0:
                 break
-        if differences==0:
+        if (differences==0) and len(mux2["services"])<=len(mux["services"]):
             if not mux2["uuid"] in muxes_to_delete:
                 muxes_to_delete.append(mux2["uuid"])
 log_end("Found %s double muxes"% (len(muxes_to_delete)))
