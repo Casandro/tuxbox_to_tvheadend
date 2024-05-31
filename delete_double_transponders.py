@@ -96,9 +96,30 @@ for mux in dvb_muxes:
         for prop in ["delsys", "frequency", "symbolrate", "polarisation", "modulation", "fec", "stream_id", "pls_mode", "pls_code", "orbital"]:
             if prop in mux and prop in mux2:
                 if mux[prop]!=mux2[prop]:
-                    differences=differences+1
+                   differences=differences+1
             if differences>0:
                 break
+        if differences>0:
+            continue
+        if False:
+            log_start("Comparing mux %s to %s" % (mux["uuid"], mux2["uuid"]))
+            log("Differences: %s" % (differences))
+            proplist={}
+            for p in mux:
+                proplist[p]=1
+            for p in mux2:
+                proplist[p]=1
+            for p in proplist:
+                if p=="services":
+                    continue
+                p1="*"
+                if p in mux:
+                    p1=mux[p]
+                p2="*"
+                if p in mux2:
+                    p2=mux2[p]
+                log("%s\t%s\t%s" % (p,p1, p2))
+            log_end("")
         if (differences==0) and len(mux2["services"])<=len(mux["services"]):
             if not mux2["uuid"] in muxes_to_delete:
                 muxes_to_delete.append(mux2["uuid"])
