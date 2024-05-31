@@ -149,6 +149,7 @@ for sat in satellite_document:
                 continue
             t_name=str(pos)
             t={}
+            t["scan_state"]=2 #Idle pending
             for t_property in trans:
                 t_value=trans[t_property]
                 if t_property == "@frequency":
